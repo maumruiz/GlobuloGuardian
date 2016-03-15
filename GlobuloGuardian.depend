@@ -1,0 +1,15 @@
+# depslib dependency file v1.0
+1458023369 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\globuloguardian\main.cpp
+	<windows.h>
+	<GLUT/glut.h>
+	<GL/glut.h>
+	<stdlib.h>
+	<stdio.h>
+	<iostream>
+	<time.h>
+
+1452708823 c:\users\mauricio\documents\glut\include\gl\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
