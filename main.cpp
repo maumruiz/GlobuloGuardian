@@ -22,8 +22,40 @@ void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
+    //Globulo
     glPushMatrix();
+    glScalef(1,1,0.1);
+    glTranslated(-9,0,0);
+    //glRotated(90,1,0,0);
+    glColor3ub(255,0,0);
+    glutSolidSphere(0.5,20,20);
+    glPopMatrix();
 
+    //Enemigo
+    glPushMatrix();
+    glScalef(1,1,0.1);
+    glTranslated(5,2,0);
+    //glRotated(90,1,0,0);
+    glColor3ub(255,255,255);
+    glutSolidSphere(0.5,20,20);
+    glPopMatrix();
+
+    //Enemigo
+    glPushMatrix();
+    glScalef(1,1,0.1);
+    glTranslated(6,-3,0);
+    //glRotated(90,1,0,0);
+    glColor3ub(255,255,255);
+    glutSolidSphere(0.5,20,20);
+    glPopMatrix();
+
+    //Enemigo
+    glPushMatrix();
+    glScalef(1,1,0.1);
+    glTranslated(0,-1,0);
+    //glRotated(90,1,0,0);
+    glColor3ub(255,255,255);
+    glutSolidSphere(0.5,20,20);
     glPopMatrix();
 
     glutSwapBuffers();
@@ -68,16 +100,18 @@ void reshape(int w, int h)
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glFrustum(-500.0, 500.0, -250.0, 250.0, 1.0, 4.0);
+    glFrustum(-10.0, 10.0, -5.0, 5.0, 1.0, 10.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0, 0, 10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(0, 0, 1, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
 void init()
 {
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glColor3f(0.0, 0.0, 0.0);
+    // Para que las paredes se vean sólidas (no transparentes)
+
 }
 
 int main(int argc, char** argv)
