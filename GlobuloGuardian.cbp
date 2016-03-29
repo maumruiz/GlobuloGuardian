@@ -8,7 +8,7 @@
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/GlobuloGuardian" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="C:/Users/Mauricio/Documents/GLUT/bin" />
+				<Option working_dir="C:/Users/Jorge/Documents/Codeblocks/GLUT/bin" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -18,7 +18,7 @@
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/GlobuloGuardian" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="C:/Users/Mauricio/Documents/GLUT/bin" />
+				<Option working_dir="C:/Users/Jorge/Documents/Codeblocks/GLUT/bin" />
 				<Option object_output="obj/Release/" />
 				<Option type="0" />
 				<Option compiler="gcc" />
@@ -32,7 +32,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add directory="C:/Users/Mauricio/Documents/GLUT/include" />
+			<Add directory="C:/Users/Jorge/Documents/Codeblocks/GLUT/include" />
 		</Compiler>
 		<Linker>
 			<Add library="glut32" />
@@ -40,13 +40,15 @@
 			<Add library="glu32" />
 			<Add library="winmm" />
 			<Add library="gdi32" />
-			<Add directory="C:/Users/Mauricio/Documents/GLUT/lib" />
+			<Add directory="C:/Users/Jorge/Documents/Codeblocks/GLUT/lib" />
 		</Linker>
+		<Unit filename="imageloader.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
 			<debugger />
+			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
