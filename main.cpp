@@ -14,27 +14,26 @@
 
 using namespace std;
 
+//Variables del personaje principal
+
+
+// Variables para texturas
 //__FILE__ is a preprocessor macro that expands to full path to the current file.
 string fullPath = __FILE__;
 using namespace std;
-int angulo=0;
+int textura=0;
 static GLuint texName[36];
 const int TEXTURE_COUNT=7;
 int z=1;
 
-//le borramos el exceso para solo obtener el Path padre
+
+
+//Le borramos el exceso para solo obtener el Path padre
 void getParentPath()
 {
     for (int i = (int)fullPath.length()-1; i>=0 && fullPath[i] != '\\'; i--) {
         fullPath.erase(i,1);
     }
-}
-
-void myTimer(int i) {
-    angulo = angulo +1;
-    if (angulo > TEXTURE_COUNT) angulo =0;
-    glutPostRedisplay();
-    glutTimerFunc(1000,myTimer,0);
 }
 
 //Makes the image into a texture, and returns the id of the texture
@@ -66,6 +65,7 @@ void loadTexture(Image* image,int k)
                  image->pixels);               //The actual pixel data
 }
 
+// Inicializacion de las imagenes y texturas
 void initRendering()
 {
     //Declaración del objeto Image
@@ -100,17 +100,20 @@ void initRendering()
     delete image;
 }
 
-void handleResize(int w, int h)
-{
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(69.0, (float)w / (float)h, 1.0, 20.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(0, 0,15 , 0, 0, 0, 0, 1, 0);
+
+///////////////////////////////////////////////////////////////////
+/////////////////    Funcion timer    /////////////////////////////
+///////////////////////////////////////////////////////////////////
+void myTimer(int i) {
+    textura = textura +1;
+    if (textura > TEXTURE_COUNT) textura =0;
+    glutPostRedisplay();
+    glutTimerFunc(1000,myTimer,0);
 }
 
+///////////////////////////////////////////////////////////////////
+/////////////////    Funcion display    ///////////////////////////
+///////////////////////////////////////////////////////////////////
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -118,8 +121,8 @@ void display()
     //Habilitar el uso de texturas
     glEnable(GL_TEXTURE_2D);
 
-    //Elegir la textura del Quads: angulo cambia con el timer
-    glBindTexture(GL_TEXTURE_2D, texName[angulo]);
+    //Elegir la textura del Quads: textura cambia con el timer
+    glBindTexture(GL_TEXTURE_2D, texName[textura]);
 
     glBegin(GL_QUADS);
     //Asignar la coordenada de textura 0,0 al vertice
@@ -175,6 +178,9 @@ void display()
     glutSwapBuffers();
 }
 
+///////////////////////////////////////////////////////////////////
+/////////////    Funciones del teclado    /////////////////////////
+///////////////////////////////////////////////////////////////////
 void myKeyboard(unsigned char key, int x, int y)
 {
     switch(key)
@@ -190,6 +196,9 @@ void myKeyboard(unsigned char key, int x, int y)
     glutPostRedisplay();
 }
 
+///////////////////////////////////////////////////////////////////
+/////////////    Funciones del teclado especial    ////////////////
+///////////////////////////////////////////////////////////////////
 void mySpecialKeyboard(int key, int x, int y)
 {
     switch(key)
@@ -204,22 +213,17 @@ void mySpecialKeyboard(int key, int x, int y)
     glutPostRedisplay();
 }
 
+///////////////////////////////////////////////////////////////////
+/////////////    Funciones del mouse    ///////////////////////////
+///////////////////////////////////////////////////////////////////
 void myMouse(int button, int state, int x, int y)
 {
     glutPostRedisplay();
 }
 
-void reshape(int w, int h)
-{
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(-10.0, 10.0, -5.0, 5.0, 1.0, 10.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(0, 0, 1, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-}
-
+///////////////////////////////////////////////////////////////////
+/////////////    Inicializacion principal    //////////////////////
+///////////////////////////////////////////////////////////////////
 void init()
 {
     glClearColor (0.0, 0.0, 0.0, 1.0);
@@ -228,6 +232,23 @@ void init()
 
 }
 
+///////////////////////////////////////////////////////////////////
+/////////////    Funcion Reshape    ///////////////////////////////
+///////////////////////////////////////////////////////////////////
+void reshape(int w, int h)
+{
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(69.0, (float)w / (float)h, 1.0, 20.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(0, 0,15 , 0, 0, 0, 0, 1, 0);
+}
+
+///////////////////////////////////////////////////////////////////
+/////////////    Main    //////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
     //Initialize GLUT
@@ -241,7 +262,7 @@ int main(int argc, char** argv)
     glutCreateWindow("Globulo Guardian");
     //States y callbacks
     initRendering();
-    glutReshapeFunc(handleResize); //Funcion reshape
+    glutReshapeFunc(reshape); //Funcion reshape
     glutDisplayFunc(display); //Dibujo
     glutMouseFunc(myMouse); //Funciones del mouse
     glutKeyboardFunc(myKeyboard); //Funciones del teclado
