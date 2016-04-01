@@ -105,8 +105,6 @@ void initRendering()
 /////////////////    Funcion timer    /////////////////////////////
 ///////////////////////////////////////////////////////////////////
 void myTimer(int i) {
-    textura = textura +1;
-    if (textura > TEXTURE_COUNT) textura =0;
     glutPostRedisplay();
     glutTimerFunc(1000,myTimer,0);
 }
@@ -204,7 +202,8 @@ void mySpecialKeyboard(int key, int x, int y)
     switch(key)
     {
         case GLUT_KEY_UP:
-
+            textura = textura +1;
+            if (textura > TEXTURE_COUNT) textura =0;
             break;
         case GLUT_KEY_DOWN:
 
