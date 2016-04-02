@@ -14,8 +14,30 @@
 
 using namespace std;
 
-//Variables del personaje principal
+//Estructura para variables de enemigos
+typedef struct Enemigo{
+    float x;
+    float y;
+    int vida;
+    float velocidad;
+    bool vivo;
+    Enemigo() {x = 0; y = 0; vida = 100; velocidad = 0.2; vivo = false;}
+};
 
+
+// Estructura para personajes que contienen sus coordenadas
+typedef struct Personaje{
+    float x;
+    float y;
+    int vida;
+    float velocidad;
+};
+
+//Inicializacion del personaje principal
+Personaje globulo = {-10, 0, 100,0.5};
+
+//Inicializacion de los enemigos
+Enemigo enemigos[20];
 
 // Variables para texturas
 //__FILE__ is a preprocessor macro that expands to full path to the current file.
@@ -105,8 +127,18 @@ void initRendering()
 /////////////////    Funcion timer    /////////////////////////////
 ///////////////////////////////////////////////////////////////////
 void myTimer(int i) {
+    // Texturas
+    textura = textura +1;
+    if (textura > TEXTURE_COUNT) textura =0;
+
+    //Movimiento de enemigos
+    for(int i=0; i<20; i++) {
+        if(enemigos[i].vivo)
+            enemigos[i].x -= enemigos[i].velocidad;
+    }
+
     glutPostRedisplay();
-    glutTimerFunc(1000,myTimer,0);
+    glutTimerFunc(100,myTimer,0);
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -116,6 +148,13 @@ void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    //Barra de vida
+    glColor3ub(0,255,0);
+    glRectf(-12,5,-12+(globulo.vida/10),6);
+    glColor3ub(255,0,0);
+    glRectf(-12,5,-2,6);
+
+    /*
     //Habilitar el uso de texturas
     glEnable(GL_TEXTURE_2D);
 
@@ -136,42 +175,36 @@ void display()
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-10.0f, 10.0f, 0);
     glEnd();
+    */
 
     //Globulo
     glPushMatrix();
     glScalef(1,1,0.1);
-    glTranslated(-9,0,0);
-    //glRotated(90,1,0,0);
+    glTranslated(globulo.x,globulo.y,0);
     glColor3ub(255,0,0);
     glutSolidSphere(0.5,20,20);
     glPopMatrix();
 
-    //Enemigo
-    glPushMatrix();
-    glScalef(1,1,0.1);
-    glTranslated(5,2,0);
-    //glRotated(90,1,0,0);
-    glColor3ub(255,255,255);
-    glutSolidSphere(0.5,20,20);
-    glPopMatrix();
+    //Enemigos
+    for(int i=0; i<20; i++) {
+        //Checa colision con el ovulo
+        if(enemigos[i].x < -11) {
+            globulo.vida -= 10;
+            if(globulo.vida < 0) globulo.vida = 0;
+            enemigos[i].x = rand() % 20 + 13;
+            enemigos[i].y = rand() % 9 - 5;
+        }
 
-    //Enemigo
-    glPushMatrix();
-    glScalef(1,1,0.1);
-    glTranslated(6,-3,0);
-    //glRotated(90,1,0,0);
-    glColor3ub(255,255,255);
-    glutSolidSphere(0.5,20,20);
-    glPopMatrix();
-
-    //Enemigo
-    glPushMatrix();
-    glScalef(1,1,0.1);
-    glTranslated(0,-1,0);
-    //glRotated(90,1,0,0);
-    glColor3ub(255,255,255);
-    glutSolidSphere(0.5,20,20);
-    glPopMatrix();
+        // Actualiza la posicion del enemigo
+        if(enemigos[i].vivo) {
+            glPushMatrix();
+            glScalef(1,1,0.1);
+            glTranslated(enemigos[i].x,enemigos[i].y,0);
+            glColor3ub(255,255,255);
+            glutSolidSphere(0.5,20,20);
+            glPopMatrix();
+        }
+    }
 
     glutSwapBuffers();
 }
@@ -183,6 +216,26 @@ void myKeyboard(unsigned char key, int x, int y)
 {
     switch(key)
     {
+        case 'w':
+            globulo.y += globulo.velocidad;
+            if(globulo.y > 4) globulo.y = 4;
+            break;
+        case 's':
+            globulo.y -= globulo.velocidad;
+            if(globulo.y < -5) globulo.y = -5;
+            break;
+        case 'a':
+            globulo.x -= globulo.velocidad;
+            if(globulo.x < -10) globulo.x = -10;
+            break;
+        case 'd':
+            globulo.x += globulo.velocidad;
+            if(globulo.x > 10) globulo.x = 10;
+            break;
+        case 'v':
+            globulo.vida -= 10;
+            if(globulo.vida < 0) globulo.vida = 0;
+        break;
         case 32:
             //Tecla de espacio
             break;
@@ -202,8 +255,7 @@ void mySpecialKeyboard(int key, int x, int y)
     switch(key)
     {
         case GLUT_KEY_UP:
-            textura = textura +1;
-            if (textura > TEXTURE_COUNT) textura =0;
+
             break;
         case GLUT_KEY_DOWN:
 
@@ -225,10 +277,20 @@ void myMouse(int button, int state, int x, int y)
 ///////////////////////////////////////////////////////////////////
 void init()
 {
-    glClearColor (0.0, 0.0, 0.0, 1.0);
+    glClearColor (1.0, 1.0, 1.0, 1.0);
     glColor3f(0.0, 0.0, 0.0);
     // Para que las paredes se vean sólidas (no transparentes)
 
+    // Inicializacion de enemigos
+    srand (time(NULL));
+    int randX, randY;
+    for(int i=0; i<6; i++){
+        enemigos[i].vivo = true;
+        randX = rand() % 20 +13;
+        randY = rand() % 9 - 5;
+        enemigos[i].x = randX;
+        enemigos[i].y = randY;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -239,10 +301,10 @@ void reshape(int w, int h)
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(69.0, (float)w / (float)h, 1.0, 20.0);
+    gluPerspective(45.0, (float)w / (float)h, 1.0, 20.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0, 0,15 , 0, 0, 0, 0, 1, 0);
+    gluLookAt(0, 0, 15, 0, 0, 0, 0, 1, 0);
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -260,6 +322,7 @@ int main(int argc, char** argv)
     getParentPath();
     glutCreateWindow("Globulo Guardian");
     //States y callbacks
+    init();
     initRendering();
     glutReshapeFunc(reshape); //Funcion reshape
     glutDisplayFunc(display); //Dibujo
