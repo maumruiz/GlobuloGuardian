@@ -10,9 +10,53 @@
 #include <stdio.h>
 #include <iostream>
 #include <time.h>
+#include <vector>
+#include <algorithm>
 #include "imageloader.h"
 
 using namespace std;
+
+// Variables generales del juego
+int estado = 2; // 0-Menu 1-Historia 2-Juego 3-Pausa
+int nivel = 1; //Nivel del juego
+
+// Variables para el estado de historia
+int contHistoria = 0;
+int duracionHistoria = 60;
+
+// Variables del juego
+int tiempoJuego = 0;
+bool movGlobulo = false;
+
+// Variables para texturas
+//__FILE__ is a preprocessor macro that expands to full path to the current file.
+string fullPath = __FILE__;
+int textura=0;
+static GLuint texName[36];
+const int TEXTURE_COUNT=7;
+int z=1;
+
+// Estructura para personajes que contienen sus coordenadas
+typedef struct Personaje{
+    float x;
+    float y;
+    int vida;
+    float velocidad;
+    bool movArriba;
+    bool movAbajo;
+    bool movDer;
+    bool movIzq;
+};
+
+typedef struct Arma {
+    float x;
+    float y;
+    float velocidad;
+    int damage;
+    int fireRate;
+    Arma() {x = 0; y = 0; velocidad = 0.5; damage = 10; fireRate = 5;}
+    Arma(float cx, float cy) {x = cx; y = cy; velocidad = 0.5; damage = 10; fireRate = 5;}
+};
 
 //Estructura para variables de enemigos
 typedef struct Enemigo{
@@ -21,34 +65,17 @@ typedef struct Enemigo{
     int vida;
     float velocidad;
     bool vivo;
-    Enemigo() {x = 0; y = 0; vida = 100; velocidad = 0.2; vivo = false;}
-};
-
-
-// Estructura para personajes que contienen sus coordenadas
-typedef struct Personaje{
-    float x;
-    float y;
-    int vida;
-    float velocidad;
+    Enemigo() {x = 0; y = 0; vida = 10; velocidad = 0.2; vivo = false;}
 };
 
 //Inicializacion del personaje principal
-Personaje globulo = {-10, 0, 100,0.5};
+Personaje globulo = {-10, 0, 100,0.5,false,false,false,false};
 
 //Inicializacion de los enemigos
 Enemigo enemigos[20];
 
-// Variables para texturas
-//__FILE__ is a preprocessor macro that expands to full path to the current file.
-string fullPath = __FILE__;
-using namespace std;
-int textura=0;
-static GLuint texName[36];
-const int TEXTURE_COUNT=7;
-int z=1;
-
-
+// Inicializacion de las armas
+vector<Arma> condones;
 
 //Le borramos el exceso para solo obtener el Path padre
 void getParentPath()
@@ -127,14 +154,49 @@ void initRendering()
 /////////////////    Funcion timer    /////////////////////////////
 ///////////////////////////////////////////////////////////////////
 void myTimer(int i) {
+    /*
     // Texturas
     textura = textura +1;
-    if (textura > TEXTURE_COUNT) textura =0;
+    if (textura > TEXTURE_COUNT) textura = 1;
+    */
 
-    //Movimiento de enemigos
-    for(int i=0; i<20; i++) {
-        if(enemigos[i].vivo)
-            enemigos[i].x -= enemigos[i].velocidad;
+    if(estado == 1) {
+        contHistoria += 1;
+        if(contHistoria%30 == 0)
+            textura += 1;
+        if(contHistoria >= 60)
+            estado = 2; //Juego
+    }
+
+    if(estado == 2) {
+        // Movimiento del globulo
+        if(globulo.movArriba) globulo.y += globulo.velocidad;
+        if(globulo.movAbajo) globulo.y -= globulo.velocidad;
+        if(globulo.movIzq) globulo.x -= globulo.velocidad;
+        if(globulo.movDer) globulo.x += globulo.velocidad;
+
+        if(globulo.y > 4) globulo.y = 4;
+        if(globulo.y < -5) globulo.y = -5;
+        if(globulo.x < -10) globulo.x = -10;
+        if(globulo.x > 10) globulo.x = 10;
+
+        //Movimiento de enemigos
+        for(int i=0; i<20; i++) {
+            if(enemigos[i].vivo)
+                enemigos[i].x -= enemigos[i].velocidad;
+        }
+
+        // Movimiento de Disparos
+        for (vector<Arma>::iterator it = condones.begin() ; it != condones.end(); ++it){
+            it->x += it->velocidad;
+        }
+
+        for (vector<Arma>::iterator it = condones.begin() ; it != condones.end(); ) {
+          if (it->x > 13)
+            it = condones.erase(it);
+          else
+            ++it;
+        }
     }
 
     glutPostRedisplay();
@@ -148,61 +210,79 @@ void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //Barra de vida
-    glColor3ub(0,255,0);
-    glRectf(-12,5,-12+(globulo.vida/10),6);
-    glColor3ub(255,0,0);
-    glRectf(-12,5,-2,6);
+    //Menu e Historia
+    if(estado == 0 || estado == 1) {
+        //Habilitar el uso de texturas
+        glEnable(GL_TEXTURE_2D);
 
-    /*
-    //Habilitar el uso de texturas
-    glEnable(GL_TEXTURE_2D);
+        //Elegir la textura del Quads: textura cambia con el timer
+        if(estado == 0)
+            glBindTexture(GL_TEXTURE_2D, texName[1]);
 
-    //Elegir la textura del Quads: textura cambia con el timer
-    glBindTexture(GL_TEXTURE_2D, texName[textura]);
+        if(estado == 1)
+            glBindTexture(GL_TEXTURE_2D, texName[textura]);
 
-    glBegin(GL_QUADS);
-    //Asignar la coordenada de textura 0,0 al vertice
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-10.0f, -10.0f, 0);
-     //Asignar la coordenada de textura 1,0 al vertice
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(10.0f, -10.0f, 0);
-     //Asignar la coordenada de textura 1,1 al vertice
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(10.0f, 10.0f, 0);
-     //Asignar la coordenada de textura 0,1 al vertice
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(-10.0f, 10.0f, 0);
-    glEnd();
-    */
+        glBegin(GL_QUADS);
+        //Asignar la coordenada de textura 0,0 al vertice
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex3f(-10.0f, -5.0f, 0);
+         //Asignar la coordenada de textura 1,0 al vertice
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex3f(10.0f, -5.0f, 0);
+         //Asignar la coordenada de textura 1,1 al vertice
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex3f(10.0f, 5.0f, 0);
+         //Asignar la coordenada de textura 0,1 al vertice
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex3f(-10.0f, 5.0f, 0);
+        glEnd();
+    }
 
-    //Globulo
-    glPushMatrix();
-    glScalef(1,1,0.1);
-    glTranslated(globulo.x,globulo.y,0);
-    glColor3ub(255,0,0);
-    glutSolidSphere(0.5,20,20);
-    glPopMatrix();
+    // Juego
+    if(estado == 2) {
+        //Barra de vida
+        glColor3ub(1,115,20);
+        glRectf(-12,5,-12+(globulo.vida/10),6);
+        glColor3ub(160,38,0);
+        glRectf(-12,5,-2,6);
 
-    //Enemigos
-    for(int i=0; i<20; i++) {
-        //Checa colision con el ovulo
-        if(enemigos[i].x < -11) {
-            globulo.vida -= 10;
-            if(globulo.vida < 0) globulo.vida = 0;
-            enemigos[i].x = rand() % 20 + 13;
-            enemigos[i].y = rand() % 9 - 5;
-        }
+        //Globulo
+        glPushMatrix();
+        glScalef(1,1,0.1);
+        glTranslated(globulo.x,globulo.y,0);
+        glColor3ub(100,0,0);
+        glutSolidSphere(0.5,20,20);
+        glPopMatrix();
 
-        // Actualiza la posicion del enemigo
-        if(enemigos[i].vivo) {
+        // Disparos
+        for (vector<Arma>::iterator it = condones.begin() ; it != condones.end(); ++it){
             glPushMatrix();
             glScalef(1,1,0.1);
-            glTranslated(enemigos[i].x,enemigos[i].y,0);
-            glColor3ub(255,255,255);
-            glutSolidSphere(0.5,20,20);
+            glTranslated(it->x,it->y,0);
+            glColor3ub(0,0,255);
+            glutSolidSphere(0.1,20,20);
             glPopMatrix();
+        }
+
+        //Enemigos
+        for(int i=0; i<20; i++) {
+            //Checa colision con el ovulo
+            if(enemigos[i].x < -11) {
+                globulo.vida -= 10;
+                if(globulo.vida < 0) globulo.vida = 0;
+                enemigos[i].x = rand() % 20 + 13;
+                enemigos[i].y = rand() % 9 - 5;
+            }
+
+            // Actualiza la posicion del enemigo
+            if(enemigos[i].vivo) {
+                glPushMatrix();
+                glScalef(1,1,0.1);
+                glTranslated(enemigos[i].x,enemigos[i].y,0);
+                glColor3ub(70,200,130);
+                glutSolidSphere(0.5,20,20);
+                glPopMatrix();
+            }
         }
     }
 
@@ -217,31 +297,52 @@ void myKeyboard(unsigned char key, int x, int y)
     switch(key)
     {
         case 'w':
-            globulo.y += globulo.velocidad;
-            if(globulo.y > 4) globulo.y = 4;
+            globulo.movArriba = true;
             break;
         case 's':
-            globulo.y -= globulo.velocidad;
-            if(globulo.y < -5) globulo.y = -5;
+            globulo.movAbajo = true;
             break;
         case 'a':
-            globulo.x -= globulo.velocidad;
-            if(globulo.x < -10) globulo.x = -10;
+            globulo.movIzq = true;
             break;
         case 'd':
-            globulo.x += globulo.velocidad;
-            if(globulo.x > 10) globulo.x = 10;
+            globulo.movDer = true;
             break;
-        case 'v':
-            globulo.vida -= 10;
-            if(globulo.vida < 0) globulo.vida = 0;
-        break;
         case 32:
-            //Tecla de espacio
+            {
+                //Tecla de espacio
+                Arma condon(globulo.x,globulo.y);
+                condones.push_back(condon);
+            }
             break;
         case 27:
             //Tecla de escape
             exit(0);
+            break;
+    }
+    glutPostRedisplay();
+}
+
+///////////////////////////////////////////////////////////////////
+/////////////    Funciones del teclado up    //////////////////////
+///////////////////////////////////////////////////////////////////
+void myKeyboardUp(unsigned char key, int x, int y)
+{
+    switch(key)
+    {
+        case 'w':
+            globulo.movArriba = false;
+            break;
+        case 's':
+            globulo.movAbajo = false;
+            break;
+        case 'a':
+            globulo.movIzq = false;
+            break;
+        case 'd':
+            globulo.movDer = false;
+            break;
+        case 32:
             break;
     }
     glutPostRedisplay();
@@ -255,7 +356,8 @@ void mySpecialKeyboard(int key, int x, int y)
     switch(key)
     {
         case GLUT_KEY_UP:
-
+            if(estado == 0)
+                estado++;
             break;
         case GLUT_KEY_DOWN:
 
@@ -328,6 +430,7 @@ int main(int argc, char** argv)
     glutDisplayFunc(display); //Dibujo
     glutMouseFunc(myMouse); //Funciones del mouse
     glutKeyboardFunc(myKeyboard); //Funciones del teclado
+    glutKeyboardUpFunc(myKeyboardUp);
     glutSpecialFunc(mySpecialKeyboard); //Teclas especiales
     glutTimerFunc(1000,myTimer,0); //Timer
 
