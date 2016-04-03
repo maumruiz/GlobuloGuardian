@@ -16,8 +16,13 @@
 
 using namespace std;
 
+#define MENU 0
+#define HISTORIA 1
+#define JUEGO 2
+#define PAUSA 3
+
 // Variables generales del juego
-int estado = 2; // 0-Menu 1-Historia 2-Juego 3-Pausa
+int estado = MENU; // 0-Menu 1-Historia 2-Juego 3-Pausa
 int nivel = 1; //Nivel del juego
 
 // Variables para el estado de historia
@@ -26,7 +31,21 @@ int duracionHistoria = 60;
 
 // Variables del juego
 int tiempoJuego = 0;
-bool movGlobulo = false;
+int enemigosActuales = 2;
+int vidaIncr = 5;   // Incremento de vida por nivel
+float velIncr = 0.1; //Incremento de velocidad por nivel
+float limiteSuperior = 4;
+float limiteInferior = -5;
+float limiteIzquierda = -10;
+float limiteDerecha = 10;
+
+//Variables para disparos
+int condonesFire = 0;
+int pastillasFire = 0;
+int condonesFireRate = 2;
+int pastillasFireRate = 4;
+bool condonShot = false;
+bool pastillaShot = false;
 
 // Variables para texturas
 //__FILE__ is a preprocessor macro that expands to full path to the current file.
@@ -55,9 +74,8 @@ typedef struct Arma {
     int tipo;
     float velocidad;
     int damage;
-    int fireRate;
-    Arma() {x = 0; y = 0; tipo = 1; velocidad = 0.5; damage = 10; fireRate = 5;}
-    Arma(float cx, float cy, int tip) {x = cx; y = cy; tipo = tip; velocidad = 0; damage = 0; fireRate = 0;}
+    Arma() {x = 0; y = 0; tipo = 1; velocidad = 0.5; damage = 10;}
+    Arma(float cx, float cy, int tip) {x = cx; y = cy; tipo = tip; velocidad = 0; damage = 0;}
 };
 
 //Estructura para variables de enemigos
@@ -67,7 +85,7 @@ typedef struct Enemigo{
     int vida;
     float velocidad;
     bool vivo;
-    Enemigo() {x = 0; y = 0; vida = 10; velocidad = 0.2; vivo = false;}
+    Enemigo() {x = 0; y = 0; vida = 5; velocidad = 0.2; vivo = false;}
 };
 
 //Inicializacion del personaje principal
@@ -162,7 +180,7 @@ void myTimer(int i) {
     if (textura > TEXTURE_COUNT) textura = 1;
     */
 
-    if(estado == 1) {
+    if(estado == HISTORIA) {
         contHistoria += 1;
         if(contHistoria%30 == 0)
             textura += 1;
@@ -170,17 +188,36 @@ void myTimer(int i) {
             estado = 2; //Juego
     }
 
-    if(estado == 2) {
+    if(estado == JUEGO) {
         // Movimiento del globulo
         if(globulo.movArriba) globulo.y += globulo.velocidad;
         if(globulo.movAbajo) globulo.y -= globulo.velocidad;
         if(globulo.movIzq) globulo.x -= globulo.velocidad;
         if(globulo.movDer) globulo.x += globulo.velocidad;
 
-        if(globulo.y > 4) globulo.y = 4;
-        if(globulo.y < -5) globulo.y = -5;
-        if(globulo.x < -10) globulo.x = -10;
-        if(globulo.x > 10) globulo.x = 10;
+        if(globulo.y > limiteSuperior) globulo.y = limiteSuperior;
+        if(globulo.y < limiteInferior) globulo.y = limiteInferior;
+        if(globulo.x < limiteIzquierda) globulo.x = limiteIzquierda;
+        if(globulo.x > limiteDerecha) globulo.x = limiteDerecha;
+
+        //Dificultad de niveles
+        if(tiempoJuego<600)
+            tiempoJuego++;
+        else {
+            tiempoJuego = 0;
+            nivel++;
+            enemigosActuales += 2;
+            if(enemigosActuales > 20) enemigosActuales = 20;
+            for(int i=enemigosActuales-2; i<enemigosActuales; i++){
+                enemigos[i].vivo = true;
+                enemigos[i].x = rand() % 20 +13;
+                enemigos[i].y = rand() % 9 - 5;
+                if(nivel%2 == 0)
+                    enemigos[i].vida += (nivel*vidaIncr);
+                else
+                    enemigos[i].velocidad += (nivel*velIncr);
+            }
+        }
 
         //Movimiento de enemigos
         for(int i=0; i<20; i++) {
@@ -189,15 +226,32 @@ void myTimer(int i) {
         }
 
         // Movimiento de Disparos
-        for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end(); ++it){
-            it->x += it->velocidad;
+        for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end();){
+            if (it->x > 13)
+                it = disparos.erase(it);
+            else{
+                it->x += it->velocidad;
+                ++it;
+            }
         }
 
-        for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end(); ) {
-          if (it->x > 13)
-            it = disparos.erase(it);
-          else
-            ++it;
+        // Fire rate de cada arma
+        if(condonShot) {
+            if(condonesFire<condonesFireRate)
+                condonesFire++;
+            else {
+                condonesFire = 0;
+                condonShot = false;
+            }
+        }
+
+        if(pastillaShot) {
+            if(pastillasFire<pastillasFireRate)
+                pastillasFire++;
+            else{
+                pastillasFire = 0;
+                pastillaShot = false;
+            }
         }
     }
 
@@ -213,15 +267,15 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //Menu e Historia
-    if(estado == 0 || estado == 1) {
+    if(estado == MENU || estado == HISTORIA) {
         //Habilitar el uso de texturas
         glEnable(GL_TEXTURE_2D);
 
         //Elegir la textura del Quads: textura cambia con el timer
-        if(estado == 0)
+        if(estado == MENU)
             glBindTexture(GL_TEXTURE_2D, texName[1]);
 
-        if(estado == 1)
+        if(estado == HISTORIA)
             glBindTexture(GL_TEXTURE_2D, texName[textura]);
 
         glBegin(GL_QUADS);
@@ -241,7 +295,7 @@ void display()
     }
 
     // Juego
-    if(estado == 2) {
+    if(estado == JUEGO) {
         //Barra de vida
         glColor3ub(1,115,20);
         glRectf(-12,5,-12+(globulo.vida/10),6);
@@ -290,7 +344,7 @@ void display()
                 enemigos[i].y = rand() % 9 - 5;
             }
 
-            // Actualiza la posicion del enemigo
+            // Dibuja al enemigo
             if(enemigos[i].vivo) {
                 glPushMatrix();
                 glScalef(1,1,0.1);
@@ -313,15 +367,19 @@ void myKeyboard(unsigned char key, int x, int y)
     switch(key)
     {
         case 'w':
+        case 'W':
             globulo.movArriba = true;
             break;
         case 's':
+        case 'S':
             globulo.movAbajo = true;
             break;
         case 'a':
+        case 'A':
             globulo.movIzq = true;
             break;
         case 'd':
+        case 'D':
             globulo.movDer = true;
             break;
         case '1':
@@ -337,14 +395,19 @@ void myKeyboard(unsigned char key, int x, int y)
                 if(disparo.tipo == 1){
                     disparo.velocidad = 0.6;
                     disparo.damage = 15;
-                    disparo.fireRate = 5;
                 }
                 else if(globulo.armaActual == 2){
                     disparo.velocidad = 0.3;
                     disparo.damage = 20;
-                    disparo.fireRate = 10;
                 }
-                disparos.push_back(disparo);
+                if(disparo.tipo == 1 && !condonShot) {
+                    disparos.push_back(disparo);
+                    condonShot = true;
+                }
+                else if(disparo.tipo == 2 && !pastillaShot) {
+                    disparos.push_back(disparo);
+                    pastillaShot = true;
+                }
             }
             break;
         case 27:
@@ -363,15 +426,19 @@ void myKeyboardUp(unsigned char key, int x, int y)
     switch(key)
     {
         case 'w':
+        case 'W':
             globulo.movArriba = false;
             break;
         case 's':
+        case 'S':
             globulo.movAbajo = false;
             break;
         case 'a':
+        case 'A':
             globulo.movIzq = false;
             break;
         case 'd':
+        case 'D':
             globulo.movDer = false;
             break;
         case 32:
@@ -388,6 +455,7 @@ void mySpecialKeyboard(int key, int x, int y)
     switch(key)
     {
         case GLUT_KEY_UP:
+            //Cambia del menu a la historia
             if(estado == 0)
                 estado++;
             break;
@@ -418,7 +486,7 @@ void init()
     // Inicializacion de enemigos
     srand (time(NULL));
     int randX, randY;
-    for(int i=0; i<6; i++){
+    for(int i=0; i<2; i++){
         enemigos[i].vivo = true;
         randX = rand() % 20 +13;
         randY = rand() % 9 - 5;
