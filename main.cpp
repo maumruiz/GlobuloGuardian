@@ -42,6 +42,7 @@ typedef struct Personaje{
     float y;
     int vida;
     float velocidad;
+    int armaActual; // 1-Condon 2-Pastilla
     bool movArriba;
     bool movAbajo;
     bool movDer;
@@ -51,11 +52,12 @@ typedef struct Personaje{
 typedef struct Arma {
     float x;
     float y;
+    int tipo;
     float velocidad;
     int damage;
     int fireRate;
-    Arma() {x = 0; y = 0; velocidad = 0.5; damage = 10; fireRate = 5;}
-    Arma(float cx, float cy) {x = cx; y = cy; velocidad = 0.5; damage = 10; fireRate = 5;}
+    Arma() {x = 0; y = 0; tipo = 1; velocidad = 0.5; damage = 10; fireRate = 5;}
+    Arma(float cx, float cy, int tip) {x = cx; y = cy; tipo = tip; velocidad = 0; damage = 0; fireRate = 0;}
 };
 
 //Estructura para variables de enemigos
@@ -69,13 +71,13 @@ typedef struct Enemigo{
 };
 
 //Inicializacion del personaje principal
-Personaje globulo = {-10, 0, 100,0.5,false,false,false,false};
+Personaje globulo = {-10, 0, 100, 0.5, 1,false,false,false,false};
 
 //Inicializacion de los enemigos
 Enemigo enemigos[20];
 
 // Inicializacion de las armas
-vector<Arma> condones;
+vector<Arma> disparos;
 
 //Le borramos el exceso para solo obtener el Path padre
 void getParentPath()
@@ -187,13 +189,13 @@ void myTimer(int i) {
         }
 
         // Movimiento de Disparos
-        for (vector<Arma>::iterator it = condones.begin() ; it != condones.end(); ++it){
+        for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end(); ++it){
             it->x += it->velocidad;
         }
 
-        for (vector<Arma>::iterator it = condones.begin() ; it != condones.end(); ) {
+        for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end(); ) {
           if (it->x > 13)
-            it = condones.erase(it);
+            it = disparos.erase(it);
           else
             ++it;
         }
@@ -255,13 +257,27 @@ void display()
         glPopMatrix();
 
         // Disparos
-        for (vector<Arma>::iterator it = condones.begin() ; it != condones.end(); ++it){
-            glPushMatrix();
-            glScalef(1,1,0.1);
-            glTranslated(it->x,it->y,0);
-            glColor3ub(0,0,255);
-            glutSolidSphere(0.1,20,20);
-            glPopMatrix();
+        for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end(); ++it){
+            // Condones
+            if(it->tipo == 1){
+                glPushMatrix();
+                glScalef(1,1,0.1);
+                glTranslated(it->x,it->y,0);
+                glColor3ub(0,0,255);
+                glutSolidSphere(0.1,20,20);
+                glPopMatrix();
+            }
+
+            //Pastillas
+            if(it->tipo == 2){
+                glPushMatrix();
+                glScalef(1,1,0.1);
+                glTranslated(it->x,it->y,0);
+                glColor3ub(0,255,255);
+                glutSolidSphere(0.2,20,20);
+                glPopMatrix();
+            }
+
         }
 
         //Enemigos
@@ -308,11 +324,27 @@ void myKeyboard(unsigned char key, int x, int y)
         case 'd':
             globulo.movDer = true;
             break;
+        case '1':
+            globulo.armaActual = 1;
+            break;
+        case '2':
+            globulo.armaActual = 2;
+            break;
         case 32:
             {
-                //Tecla de espacio
-                Arma condon(globulo.x,globulo.y);
-                condones.push_back(condon);
+                Arma disparo(globulo.x,globulo.y,globulo.armaActual);
+                //Tecla de espacio (disparo)
+                if(disparo.tipo == 1){
+                    disparo.velocidad = 0.6;
+                    disparo.damage = 15;
+                    disparo.fireRate = 5;
+                }
+                else if(globulo.armaActual == 2){
+                    disparo.velocidad = 0.3;
+                    disparo.damage = 20;
+                    disparo.fireRate = 10;
+                }
+                disparos.push_back(disparo);
             }
             break;
         case 27:
