@@ -20,10 +20,13 @@ using namespace std;
 #define HISTORIA 1
 #define JUEGO 2
 #define PAUSA 3
+#define GAMEOVER 4
+#define WIN 5
 
 // Variables generales del juego
 int estado = JUEGO; // 0-Menu 1-Historia 2-Juego 3-Pausa
 int nivel = 1; //Nivel del juego
+int puntaje = 0;
 
 // Variables para el estado de historia
 int contHistoria = 0;
@@ -38,6 +41,11 @@ float limiteSuperior = 4;
 float limiteInferior = -5;
 float limiteIzquierda = -10;
 float limiteDerecha = 10;
+char msg[200] = "";
+
+// Variables para jefes
+int movFluido = 5;
+int contMovFluido = 0;
 
 //Variables para disparos
 int condonesFire = 0;
@@ -95,11 +103,31 @@ typedef struct Enemigo{
     Enemigo() {x = 0; y = 0; vidaMax = 5; vida = 5; velocidad = 0.2; vivo = false; radioHorizontal = 0.5; radioVertical = 0.5;}
 };
 
+//Estructura para variables de jefes
+typedef struct Jefe{
+    float x;
+    float y;
+    int vidaMax;
+    int vida;
+    float velocidad;
+    bool vivo;
+    int movHorizontal;
+    int movVertical;
+    float radioVertical;
+    float radioHorizontal;
+    Jefe() {x = 0; y = 0; vidaMax = 5; vida = 5; velocidad = 0.2;
+                movHorizontal = 0; movVertical = 0; vivo = false;
+                radioHorizontal = 0.5; radioVertical = 0.5;}
+};
+
 //Inicializacion del personaje principal
 Personaje globulo = {-10, 0, 100, 0.5, 1, 0.5, 0.5, false,false,false,false};
 
 //Inicializacion de los enemigos
 Enemigo enemigos[20];
+
+// Inicializacion de los jefes
+Jefe jefes[2];
 
 // Inicializacion de las armas
 vector<Arma> disparos;
@@ -187,6 +215,14 @@ bool checaColision(Arma arma, Enemigo enemigo)
              arma.y - arma.radioVertical >= enemigo.y + enemigo.radioVertical);
 }
 
+bool checaColision(Arma arma, Jefe jefe)
+{
+    return !(arma.x + arma.radioHorizontal <= jefe.x - jefe.radioHorizontal ||
+             arma.x - arma.radioHorizontal >= jefe.x + jefe.radioHorizontal ||
+             arma.y + arma.radioVertical <= jefe.y - jefe.radioVertical ||
+             arma.y - arma.radioVertical >= jefe.y + jefe.radioVertical);
+}
+
 bool checaColision(Personaje personaje, Enemigo enemigo)
 {
     return !(personaje.x + personaje.radioHorizontal <= enemigo.x - enemigo.radioHorizontal ||
@@ -206,6 +242,21 @@ void regeneraEnemigo(int i)
 }
 
 ///////////////////////////////////////////////////////////////////
+///////   Funcion para inicializar a jefe    //////////////////////
+///////////////////////////////////////////////////////////////////
+void creaJefe(int i, int v, float vel, float rv, float rh)
+{
+    jefes[i].vivo = true;
+    jefes[i].x = rand()% 40 + 13;
+    jefes[i].y = rand() % 9 - 5;
+    jefes[i].vidaMax = v;
+    jefes[i].vida = jefes[i].vidaMax;
+    jefes[i].velocidad = vel;
+    jefes[i].radioVertical = rv;
+    jefes[i].radioHorizontal = rh;
+}
+
+///////////////////////////////////////////////////////////////////
 /////////////////    Funcion timer    /////////////////////////////
 ///////////////////////////////////////////////////////////////////
 void myTimer(int i) {
@@ -218,7 +269,7 @@ void myTimer(int i) {
     if(estado == HISTORIA) {
         contHistoria += 1;
         if(contHistoria%30 == 0)
-            textura += 1;
+            textura++;
         if(contHistoria >= 60)
             estado = 2; //Juego
     }
@@ -226,11 +277,15 @@ void myTimer(int i) {
     if(estado == JUEGO) {
 
         //Dificultad de niveles
-        if(tiempoJuego > 0)
-            tiempoJuego--;
+        if(tiempoJuego > 0){
+            if(nivel != 5 && nivel != 10)
+                tiempoJuego--;
+        }
         else {
             tiempoJuego = 600;
             nivel++;
+            if(nivel == 5) creaJefe(0,150,0.3,1,1);
+            if(nivel == 10) creaJefe(0,300,0.5,2,2);
             enemigosActuales += 2;
             if(enemigosActuales > 20) enemigosActuales = 20;
             for(int i=enemigosActuales-2; i<enemigosActuales; i++){
@@ -242,6 +297,47 @@ void myTimer(int i) {
                 regeneraEnemigo(i);
             }
         }
+
+
+        //Movimiento de los jefes
+        for(int i=0; i<2; i++) {
+            if(jefes[i].vivo)
+            {
+                if(jefes[i].x > 10)
+                    jefes[i].x -= jefes[i].velocidad;
+                else {
+                    if(contMovFluido >= movFluido) {
+                        jefes[i].movHorizontal = rand() % 3 - 1;
+                        jefes[i].movVertical = rand() % 3 - 1;
+                        contMovFluido = 0;
+                    }
+                    jefes[i].x += jefes[i].movHorizontal * jefes[i].velocidad;
+                    jefes[i].y += jefes[i].movVertical * jefes[i].velocidad;
+                    contMovFluido++;
+                }
+
+                if(jefes[i].x < 0) {jefes[i].x = 0; jefes[i].movHorizontal * -1; }
+                if(jefes[i].y > 4) {jefes[i].y = 4; jefes[i].movVertical * -1; }
+                if(jefes[i].y < -5) {jefes[i].y = -5; jefes[i].movVertical * -1; }
+
+                //Checa colision con las armas
+                for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end();) {
+                    if(checaColision(*(it),jefes[i])) {
+                        jefes[i].vida -= it->damage;
+                        if(jefes[i].vida <= 0){
+                            puntaje += jefes[i].vidaMax;
+                            jefes[i].vivo = false;
+                            nivel++;
+                            if(i == 1) estado = WIN;
+                        }
+                        it = disparos.erase(it);
+                    }
+                    else
+                        it++;
+                }
+            }
+        }
+
 
         //Movimiento de enemigos
         for(int i=0; i<20; i++) {
@@ -261,6 +357,7 @@ void myTimer(int i) {
                     if(checaColision(*(it),enemigos[i])) {
                         enemigos[i].vida -= it->damage;
                         if(enemigos[i].vida <= 0){
+                            puntaje += ((i+2)/2) * 5;
                             regeneraEnemigo(i);
                         }
                         it = disparos.erase(it);
@@ -364,6 +461,27 @@ void display()
         glColor3ub(160,38,0);
         glRectf(-12,5,-2,6);
 
+        // Nivel
+        sprintf(msg, "%s%d", "Nivel ", nivel);
+        glColor3ub(0,0,0);
+        glRasterPos2d(0,5.5);
+        for(int k=0;msg[k]!='\0'; k++)
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, msg[k]);
+
+        //Tiempo
+        sprintf(msg, "%d", tiempoJuego/10);
+        glColor3ub(0,0,0);
+        glRasterPos2d(0.5,5);
+        for(int k=0;msg[k]!='\0'; k++)
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, msg[k]);
+
+        //Puntaje
+        sprintf(msg, "%s%d", "Puntaje: " ,puntaje);
+        glColor3ub(0,0,0);
+        glRasterPos2d(5,5.25);
+        for(int k=0;msg[k]!='\0'; k++)
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, msg[k]);
+
         //Globulo
         glPushMatrix();
         glScalef(1,1,0.1);
@@ -405,6 +523,19 @@ void display()
                 glTranslated(enemigos[i].x,enemigos[i].y,0);
                 glColor3ub(70,200,130);
                 glutSolidSphere(0.5,20,20);
+                glPopMatrix();
+            }
+        }
+
+        //Jefes
+        for(int i=0; i<2; i++) {
+            // Dibuja al enemigo
+            if(jefes[i].vivo) {
+                glPushMatrix();
+                glScalef(1,1,0.1);
+                glTranslated(jefes[i].x,jefes[i].y,0);
+                glColor3ub(90,150,50);
+                glutSolidSphere(jefes[i].radioHorizontal,20,20);
                 glPopMatrix();
             }
         }
