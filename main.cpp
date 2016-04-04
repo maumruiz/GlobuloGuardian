@@ -24,7 +24,7 @@ using namespace std;
 #define WIN 5
 
 // Variables generales del juego
-int estado = JUEGO; // 0-Menu 1-Historia 2-Juego 3-Pausa
+int estado = MENU; // 0-Menu 1-Historia 2-Juego 3-Pausa
 int nivel = 1; //Nivel del juego
 int puntaje = 0;
 
