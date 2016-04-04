@@ -22,7 +22,7 @@ using namespace std;
 #define PAUSA 3
 
 // Variables generales del juego
-int estado = MENU; // 0-Menu 1-Historia 2-Juego 3-Pausa
+int estado = JUEGO; // 0-Menu 1-Historia 2-Juego 3-Pausa
 int nivel = 1; //Nivel del juego
 
 // Variables para el estado de historia
@@ -30,7 +30,7 @@ int contHistoria = 0;
 int duracionHistoria = 60;
 
 // Variables del juego
-int tiempoJuego = 0;
+int tiempoJuego = 600;
 int enemigosActuales = 2;
 int vidaIncr = 5;   // Incremento de vida por nivel
 float velIncr = 0.1; //Incremento de velocidad por nivel
@@ -50,7 +50,7 @@ bool pastillaShot = false;
 // Variables para texturas
 //__FILE__ is a preprocessor macro that expands to full path to the current file.
 string fullPath = __FILE__;
-int textura=0;
+int textura=1;
 static GLuint texName[36];
 const int TEXTURE_COUNT=7;
 int z=1;
@@ -62,6 +62,8 @@ typedef struct Personaje{
     int vida;
     float velocidad;
     int armaActual; // 1-Condon 2-Pastilla
+    float radioVertical;
+    float radioHorizontal;
     bool movArriba;
     bool movAbajo;
     bool movDer;
@@ -74,22 +76,27 @@ typedef struct Arma {
     int tipo;
     float velocidad;
     int damage;
-    Arma() {x = 0; y = 0; tipo = 1; velocidad = 0.5; damage = 10;}
-    Arma(float cx, float cy, int tip) {x = cx; y = cy; tipo = tip; velocidad = 0; damage = 0;}
+    float radioVertical;
+    float radioHorizontal;
+    Arma() {x = 0; y = 0; tipo = 1; velocidad = 0.5; damage = 10; radioVertical = 0.5; radioHorizontal = 0.5;}
+    Arma(float cx, float cy, int tip) {x = cx; y = cy; tipo = tip; velocidad = 0; damage = 0; radioHorizontal = 0; radioVertical = 0;}
 };
 
 //Estructura para variables de enemigos
 typedef struct Enemigo{
     float x;
     float y;
+    int vidaMax;
     int vida;
     float velocidad;
     bool vivo;
-    Enemigo() {x = 0; y = 0; vida = 5; velocidad = 0.2; vivo = false;}
+    float radioVertical;
+    float radioHorizontal;
+    Enemigo() {x = 0; y = 0; vidaMax = 5; vida = 5; velocidad = 0.2; vivo = false; radioHorizontal = 0.5; radioVertical = 0.5;}
 };
 
 //Inicializacion del personaje principal
-Personaje globulo = {-10, 0, 100, 0.5, 1,false,false,false,false};
+Personaje globulo = {-10, 0, 100, 0.5, 1, 0.5, 0.5, false,false,false,false};
 
 //Inicializacion de los enemigos
 Enemigo enemigos[20];
@@ -169,6 +176,34 @@ void initRendering()
     delete image;
 }
 
+///////////////////////////////////////////////////////////////////
+///////    Funciones para checar colisiones    ////////////////////
+///////////////////////////////////////////////////////////////////
+bool checaColision(Arma arma, Enemigo enemigo)
+{
+    return !(arma.x + arma.radioHorizontal <= enemigo.x - enemigo.radioHorizontal ||
+             arma.x - arma.radioHorizontal >= enemigo.x + enemigo.radioHorizontal ||
+             arma.y + arma.radioVertical <= enemigo.y - enemigo.radioVertical ||
+             arma.y - arma.radioVertical >= enemigo.y + enemigo.radioVertical);
+}
+
+bool checaColision(Personaje personaje, Enemigo enemigo)
+{
+    return !(personaje.x + personaje.radioHorizontal <= enemigo.x - enemigo.radioHorizontal ||
+             personaje.x - personaje.radioHorizontal >= enemigo.x + enemigo.radioHorizontal ||
+             personaje.y + personaje.radioVertical <= enemigo.y - enemigo.radioVertical ||
+             personaje.y - personaje.radioVertical >= enemigo.y + enemigo.radioVertical);
+}
+
+///////////////////////////////////////////////////////////////////
+///////    Regenera Enemigo con sus datos originales    ///////////
+/////////Asigna coordenadas segun el nivel de enemigo//////////////
+void regeneraEnemigo(int i)
+{
+    enemigos[i].x = rand()% ((i+1)*10) + 13;
+    enemigos[i].y = rand() % 9 - 5;
+    enemigos[i].vida = enemigos[i].vidaMax;
+}
 
 ///////////////////////////////////////////////////////////////////
 /////////////////    Funcion timer    /////////////////////////////
@@ -189,6 +224,53 @@ void myTimer(int i) {
     }
 
     if(estado == JUEGO) {
+
+        //Dificultad de niveles
+        if(tiempoJuego > 0)
+            tiempoJuego--;
+        else {
+            tiempoJuego = 600;
+            nivel++;
+            enemigosActuales += 2;
+            if(enemigosActuales > 20) enemigosActuales = 20;
+            for(int i=enemigosActuales-2; i<enemigosActuales; i++){
+                enemigos[i].vivo = true;
+                if(nivel%2 == 0)
+                    enemigos[i].vidaMax += (nivel*vidaIncr);
+                else
+                    enemigos[i].velocidad += (nivel*velIncr);
+                regeneraEnemigo(i);
+            }
+        }
+
+        //Movimiento de enemigos
+        for(int i=0; i<20; i++) {
+            if(enemigos[i].vivo) {
+                // Actualiza posicion del enemigo
+                enemigos[i].x -= enemigos[i].velocidad;
+
+                //Checa colision con el ovulo y personaje
+                if(enemigos[i].x < -11 || checaColision(globulo,enemigos[i])) {
+                    globulo.vida -= 10;
+                    if(globulo.vida <= 0) globulo.vida = 0;
+                    regeneraEnemigo(i);
+                }
+
+                //Checa colision con las armas
+                for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end();) {
+                    if(checaColision(*(it),enemigos[i])) {
+                        enemigos[i].vida -= it->damage;
+                        if(enemigos[i].vida <= 0){
+                            regeneraEnemigo(i);
+                        }
+                        it = disparos.erase(it);
+                    }
+                    else
+                        it++;
+                }
+            }
+        }
+
         // Movimiento del globulo
         if(globulo.movArriba) globulo.y += globulo.velocidad;
         if(globulo.movAbajo) globulo.y -= globulo.velocidad;
@@ -200,33 +282,10 @@ void myTimer(int i) {
         if(globulo.x < limiteIzquierda) globulo.x = limiteIzquierda;
         if(globulo.x > limiteDerecha) globulo.x = limiteDerecha;
 
-        //Dificultad de niveles
-        if(tiempoJuego<600)
-            tiempoJuego++;
-        else {
-            tiempoJuego = 0;
-            nivel++;
-            enemigosActuales += 2;
-            if(enemigosActuales > 20) enemigosActuales = 20;
-            for(int i=enemigosActuales-2; i<enemigosActuales; i++){
-                enemigos[i].vivo = true;
-                enemigos[i].x = rand() % 20 +13;
-                enemigos[i].y = rand() % 9 - 5;
-                if(nivel%2 == 0)
-                    enemigos[i].vida += (nivel*vidaIncr);
-                else
-                    enemigos[i].velocidad += (nivel*velIncr);
-            }
-        }
-
-        //Movimiento de enemigos
-        for(int i=0; i<20; i++) {
-            if(enemigos[i].vivo)
-                enemigos[i].x -= enemigos[i].velocidad;
-        }
 
         // Movimiento de Disparos
         for (vector<Arma>::iterator it = disparos.begin() ; it != disparos.end();){
+            //Checa si se sale de la pantalla
             if (it->x > 13)
                 it = disparos.erase(it);
             else{
@@ -255,6 +314,8 @@ void myTimer(int i) {
         }
     }
 
+
+    // Callbacks
     glutPostRedisplay();
     glutTimerFunc(100,myTimer,0);
 }
@@ -265,6 +326,7 @@ void myTimer(int i) {
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor3ub(255,255,255);
 
     //Menu e Historia
     if(estado == MENU || estado == HISTORIA) {
@@ -273,7 +335,7 @@ void display()
 
         //Elegir la textura del Quads: textura cambia con el timer
         if(estado == MENU)
-            glBindTexture(GL_TEXTURE_2D, texName[1]);
+            glBindTexture(GL_TEXTURE_2D, texName[0]);
 
         if(estado == HISTORIA)
             glBindTexture(GL_TEXTURE_2D, texName[textura]);
@@ -336,14 +398,6 @@ void display()
 
         //Enemigos
         for(int i=0; i<20; i++) {
-            //Checa colision con el ovulo
-            if(enemigos[i].x < -11) {
-                globulo.vida -= 10;
-                if(globulo.vida < 0) globulo.vida = 0;
-                enemigos[i].x = rand() % 20 + 13;
-                enemigos[i].y = rand() % 9 - 5;
-            }
-
             // Dibuja al enemigo
             if(enemigos[i].vivo) {
                 glPushMatrix();
@@ -395,10 +449,14 @@ void myKeyboard(unsigned char key, int x, int y)
                 if(disparo.tipo == 1){
                     disparo.velocidad = 0.6;
                     disparo.damage = 15;
+                    disparo.radioVertical = 0.1;
+                    disparo.radioHorizontal = 0.1;
                 }
                 else if(globulo.armaActual == 2){
                     disparo.velocidad = 0.3;
                     disparo.damage = 20;
+                    disparo.radioVertical = 0.2;
+                    disparo.radioHorizontal = 0.2;
                 }
                 if(disparo.tipo == 1 && !condonShot) {
                     disparos.push_back(disparo);
@@ -480,7 +538,7 @@ void myMouse(int button, int state, int x, int y)
 void init()
 {
     glClearColor (1.0, 1.0, 1.0, 1.0);
-    glColor3f(0.0, 0.0, 0.0);
+    glColor3f(1.0, 1.0, 1.0);
     // Para que las paredes se vean sólidas (no transparentes)
 
     // Inicializacion de enemigos
@@ -488,7 +546,7 @@ void init()
     int randX, randY;
     for(int i=0; i<2; i++){
         enemigos[i].vivo = true;
-        randX = rand() % 20 +13;
+        randX = rand()% ((i+1)*10) + 13;
         randY = rand() % 9 - 5;
         enemigos[i].x = randX;
         enemigos[i].y = randY;
