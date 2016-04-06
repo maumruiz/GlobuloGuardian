@@ -188,18 +188,8 @@ void initRendering()
     sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Historia.bmp");
     image = loadBMP(ruta);loadTexture(image,i++);
 
-    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Nivel1.bmp");
+    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Instrucciones.bmp");
     image = loadBMP(ruta);loadTexture(image,i++);
-
-    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Inicio.bmp");
-    image = loadBMP(ruta);loadTexture(image,i++);
-
-    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Historia.bmp");
-    image = loadBMP(ruta);loadTexture(image,i++);
-
-    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Nivel1.bmp");
-    image = loadBMP(ruta);loadTexture(image,i++);
-
 
     delete image;
 }
@@ -711,7 +701,7 @@ int main(int argc, char** argv)
     glutInitWindowPosition(200,100);
     //Obtener el path de los archivos
     getParentPath();
-    glutCreateWindow("Globulo Guardian");
+    glutCreateWindow("El Guardian Globular");
     //States y callbacks
     init();
     initRendering();
