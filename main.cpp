@@ -12,7 +12,17 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
-#include "imageloader.h"
+
+#include "imageLoader.h"
+#include "glm.h"
+
+//Amount of models and model ids
+#define MODEL_COUNT 10
+#define PLAYER_MOD 0
+#define ESPERMA_MOD 1
+#define JEFE_MOD 2
+#define CONDON_MOD 3
+#define PASTILLA_MOD 4
 
 using namespace std;
 
@@ -62,6 +72,9 @@ int textura=1;
 static GLuint texName[36];
 const int TEXTURE_COUNT=7;
 int z=1;
+
+// Variables para modelos
+GLMmodel models[MODEL_COUNT];
 
 // Estructura para personajes que contienen sus coordenadas
 typedef struct Personaje{
@@ -132,67 +145,6 @@ Jefe jefes[2];
 // Inicializacion de las armas
 vector<Arma> disparos;
 
-//Le borramos el exceso para solo obtener el Path padre
-void getParentPath()
-{
-    for (int i = (int)fullPath.length()-1; i>=0 && fullPath[i] != '\\'; i--) {
-        fullPath.erase(i,1);
-    }
-}
-
-//Makes the image into a texture, and returns the id of the texture
-void loadTexture(Image* image,int k)
-{
-
-    glBindTexture(GL_TEXTURE_2D, texName[k]); //Tell OpenGL which texture to edit
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    //Filtros de ampliacion y redución con cálculo mas cercano no es tan bueno pero es rápido
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-
-    //Filtros de ampliacion y redución con cálculo lineal es mejo pero son más calculos
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-
-    //Map the image to the texture
-    glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
-                 0,                            //0 for now
-                 GL_RGB,                       //Format OpenGL uses for image
-                 image->width, image->height,  //Width and height
-                 0,                            //The border of the image
-                 GL_RGB, //GL_RGB, because pixels are stored in RGB format
-                 GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
-                 //as unsigned numbers
-                 image->pixels);               //The actual pixel data
-}
-
-// Inicializacion de las imagenes y texturas
-void initRendering()
-{
-    //Declaración del objeto Image
-    Image* image;
-    GLuint i=0;
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glGenTextures(TEXTURE_COUNT, texName); //Make room for our texture
-
-
-    char  ruta[200];
-    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Inicio.bmp");
-    image = loadBMP(ruta);loadTexture(image,i++);
-
-    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Historia.bmp");
-    image = loadBMP(ruta);loadTexture(image,i++);
-
-    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Instrucciones.bmp");
-    image = loadBMP(ruta);loadTexture(image,i++);
-
-    delete image;
-}
 
 ///////////////////////////////////////////////////////////////////
 ///////    Funciones para checar colisiones    ////////////////////
@@ -430,16 +382,16 @@ void display()
         glBegin(GL_QUADS);
         //Asignar la coordenada de textura 0,0 al vertice
         glTexCoord2f(0.0f, 0.0f);
-        glVertex3f(-10.0f, -5.0f, 0);
+        glVertex3f(-12.5f, -6.5f, 0);
          //Asignar la coordenada de textura 1,0 al vertice
         glTexCoord2f(1.0f, 0.0f);
-        glVertex3f(10.0f, -5.0f, 0);
+        glVertex3f(12.5f, -6.5f, 0);
          //Asignar la coordenada de textura 1,1 al vertice
         glTexCoord2f(1.0f, 1.0f);
-        glVertex3f(10.0f, 5.0f, 0);
+        glVertex3f(12.5f, 6.5, 0);
          //Asignar la coordenada de textura 0,1 al vertice
         glTexCoord2f(0.0f, 1.0f);
-        glVertex3f(-10.0f, 5.0f, 0);
+        glVertex3f(-12.5f, 6.5f, 0);
         glEnd();
     }
 
@@ -509,10 +461,12 @@ void display()
             // Dibuja al enemigo
             if(enemigos[i].vivo) {
                 glPushMatrix();
-                glScalef(1,1,0.1);
                 glTranslated(enemigos[i].x,enemigos[i].y,0);
+                //glRotated(angulo, 0, 1, 0);
+                glScalef(1,1,1);
                 glColor3ub(70,200,130);
-                glutSolidSphere(0.5,20,20);
+                //glutSolidSphere(0.5,20,20);
+                glmDraw(&models[ESPERMA_MOD], GLM_COLOR | GLM_FLAT);
                 glPopMatrix();
             }
         }
@@ -562,6 +516,11 @@ void myKeyboard(unsigned char key, int x, int y)
             break;
         case '2':
             globulo.armaActual = 2;
+            break;
+        case 13:
+            //Cambia del menu a la historia
+            if(estado == MENU)
+                estado = HISTORIA;
             break;
         case 32:
             {
@@ -634,9 +593,7 @@ void mySpecialKeyboard(int key, int x, int y)
     switch(key)
     {
         case GLUT_KEY_UP:
-            //Cambia del menu a la historia
-            if(estado == 0)
-                estado++;
+
             break;
         case GLUT_KEY_DOWN:
 
@@ -654,13 +611,108 @@ void myMouse(int button, int state, int x, int y)
 }
 
 ///////////////////////////////////////////////////////////////////
+/////////////    Path padre    ////////////////////////////////////
+//////Le borramos el exceso para solo obtener el Path padre////////
+void getParentPath()
+{
+    for (int i = (int)fullPath.length()-1; i>=0 && fullPath[i] != '\\'; i--) {
+        fullPath.erase(i,1);
+    }
+}
+
+///////////////////////////////////////////////////////////////////
+////    Makes the image into a texture,     ///////////////////////
+///////////  and returns the id of the texture  ///////////////////
+void loadTexture(Image* image,int k)
+{
+
+    glBindTexture(GL_TEXTURE_2D, texName[k]); //Tell OpenGL which texture to edit
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    //Filtros de ampliacion y redución con cálculo mas cercano no es tan bueno pero es rápido
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+
+    //Filtros de ampliacion y redución con cálculo lineal es mejo pero son más calculos
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+
+    //Map the image to the texture
+    glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
+                 0,                            //0 for now
+                 GL_RGB,                       //Format OpenGL uses for image
+                 image->width, image->height,  //Width and height
+                 0,                            //The border of the image
+                 GL_RGB, //GL_RGB, because pixels are stored in RGB format
+                 GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
+                 //as unsigned numbers
+                 image->pixels);               //The actual pixel data
+}
+
+///////////////////////////////////////////////////////////////////
+/////////    Inicializacion de Imagenes y Texturas    /////////////
+///////////////////////////////////////////////////////////////////
+void initRendering()
+{
+    //Declaración del objeto Image
+    Image* image;
+    GLuint i=0;
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glGenTextures(TEXTURE_COUNT, texName); //Make room for our texture
+
+
+    char  ruta[200];
+    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Inicio.bmp");
+    image = loadBMP(ruta);loadTexture(image,i++);
+
+    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Historia.bmp");
+    image = loadBMP(ruta);loadTexture(image,i++);
+
+    sprintf(ruta,"%s%s", fullPath.c_str() , "Texturas/Instrucciones.bmp");
+    image = loadBMP(ruta);loadTexture(image,i++);
+
+    delete image;
+}
+
+///////////////////////////////////////////////////////////////////
+/////////////    Inicializacion de Modelos    /////////////////////
+///////////////////////////////////////////////////////////////////
+void initModels()
+{
+    //General settings
+    glEnable(GL_DEPTH_TEST);
+    glShadeModel(GL_SMOOTH);
+
+    //player
+    std::string ruta = fullPath + "objects/player.obj";
+    std::cout << "Filepath: " << ruta << std::endl;
+    models[PLAYER_MOD] = *glmReadOBJ(ruta.c_str());
+    glmUnitize(&models[PLAYER_MOD]);
+    glmVertexNormals(&models[PLAYER_MOD], 90.0, GL_TRUE);
+
+    //espermatozoides
+    ruta = fullPath + "objects/espermatozoide.obj";
+    std::cout << "Filepath: " << ruta << std::endl;
+    models[ESPERMA_MOD] = *glmReadOBJ(ruta.c_str());
+    glmUnitize(&models[ESPERMA_MOD]);
+    glmVertexNormals(&models[ESPERMA_MOD], 90.0, GL_TRUE);
+
+}
+
+///////////////////////////////////////////////////////////////////
 /////////////    Inicializacion principal    //////////////////////
 ///////////////////////////////////////////////////////////////////
 void init()
 {
     glClearColor (1.0, 1.0, 1.0, 1.0);
     glColor3f(1.0, 1.0, 1.0);
-    // Para que las paredes se vean sólidas (no transparentes)
+
+    initModels();
+    initRendering();
 
     // Inicializacion de enemigos
     srand (time(NULL));
@@ -699,12 +751,11 @@ int main(int argc, char** argv)
     //Window
     glutInitWindowSize(1000,500);
     glutInitWindowPosition(200,100);
+    glutCreateWindow("El Guardian Globular");
     //Obtener el path de los archivos
     getParentPath();
-    glutCreateWindow("El Guardian Globular");
     //States y callbacks
     init();
-    initRendering();
     glutReshapeFunc(reshape); //Funcion reshape
     glutDisplayFunc(display); //Dibujo
     glutMouseFunc(myMouse); //Funciones del mouse
