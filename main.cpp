@@ -87,6 +87,12 @@ int extraDamageCondon = 0;
 int extraDamagePastilla = 0;
 int extraDamageInyeccion = 0;
 
+//Variables para iluminacion
+GLfloat light_ambient[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat light_specular[] = { 0.0, 1.0, 1.0, 1.0 };
+GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
+
 // Variables para texturas
 //__FILE__ is a preprocessor macro that expands to full path to the current file.
 string fullPath = __FILE__;
@@ -510,6 +516,8 @@ void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor3ub(255,255,255);
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
     //Menu e Historia
     if(estado == MENU || estado == HISTORIA || estado == INSTRUCCIONES ||
@@ -1106,6 +1114,23 @@ void initModels()
 }
 
 ///////////////////////////////////////////////////////////////////
+/////////////    Inicializacion de Modelos    /////////////////////
+///////////////////////////////////////////////////////////////////
+void initLightning()
+{
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_DEPTH_TEST);
+    glShadeModel (GL_SMOOTH);//   GL_SMOOTH
+
+}
+
+///////////////////////////////////////////////////////////////////
 /////////////    Inicializacion principal    //////////////////////
 ///////////////////////////////////////////////////////////////////
 void init()
@@ -1115,6 +1140,7 @@ void init()
 
     initModels();
     initRendering();
+    initLightning();
 
     // Inicializacion de enemigos
     srand (time(NULL));
