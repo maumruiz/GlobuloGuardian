@@ -42,7 +42,62 @@
 			<Add library="gdi32" />
 			<Add directory="C:/Users/Mauricio/Documents/GLUT/lib" />
 		</Linker>
+		<Unit filename="glm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glm.h" />
+		<Unit filename="glm_util.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glmimg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glmimg_devil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glmimg_jpg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glmimg_png.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glmimg_sdl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glmimg_sim.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glmint.h" />
+		<Unit filename="imageLoader.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="objects/Globulo.mtl" />
+		<Unit filename="objects/Globulo.obj" />
+		<Unit filename="objects/PowerCondon.mtl" />
+		<Unit filename="objects/PowerCondon.obj" />
+		<Unit filename="objects/Rayito.png" />
+		<Unit filename="objects/condon.mtl" />
+		<Unit filename="objects/condon.obj" />
+		<Unit filename="objects/condontxt.png" />
+		<Unit filename="objects/cruz.mtl" />
+		<Unit filename="objects/cruz.obj" />
+		<Unit filename="objects/cruztext.png" />
+		<Unit filename="objects/esperma.jpg" />
+		<Unit filename="objects/esperma.mtl" />
+		<Unit filename="objects/esperma.obj" />
+		<Unit filename="objects/espermatozoide.obj" />
+		<Unit filename="objects/globulotxt.png" />
+		<Unit filename="objects/papiloma.mtl" />
+		<Unit filename="objects/papiloma.obj" />
+		<Unit filename="objects/papilomatext.png" />
+		<Unit filename="objects/pastilla.mtl" />
+		<Unit filename="objects/pastilla.obj" />
+		<Unit filename="objects/pastillatext.png" />
+		<Unit filename="objects/powerCondontxt.png" />
+		<Unit filename="objects/powerinyeccion.mtl" />
+		<Unit filename="objects/powerinyeccion.obj" />
+		<Unit filename="objects/powerinyecciontxt.png" />
+		<Unit filename="objects/rayito.mtl" />
+		<Unit filename="objects/rayito.obj" />
 		<Extensions>
 			<code_completion />
 			<envvars />

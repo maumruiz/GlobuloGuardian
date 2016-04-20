@@ -1,0 +1,115 @@
+# depslib dependency file v1.0
+1461172292 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\main.cpp
+	<windows.h>
+	<GLUT/glut.h>
+	<GL/glut.h>
+	<stdlib.h>
+	<stdio.h>
+	<iostream>
+	<time.h>
+	<vector>
+	<algorithm>
+	"imageLoader.h"
+	"glm.h"
+
+1458031008 c:\users\mauricio\documents\glut\include\gl\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
+1460532142 c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\imageloader.h
+	<assert.h>
+	<fstream>
+
+1460533023 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glm.c
+	"config.h"
+	<math.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+	"glm.h"
+	"glmint.h"
+
+1460532968 c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glm.h
+	<windows.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
+1460533470 c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmint.h
+
+1460533245 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glm_util.c
+	"config.h"
+	<stdlib.h>
+	<stdarg.h>
+	<string.h>
+	<stdio.h>
+	"glm.h"
+	"glmint.h"
+
+1460533290 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmimg.c
+	"config.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+	<math.h>
+	<windows.h>
+	<OpenGL/gl.h>
+	<OpenGL/glext.h>
+	<GL/gl.h>
+	<GL/glext.h>
+	"glm.h"
+	"glmint.h"
+	"glmimg_jpg.c"
+
+1460533348 c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmimg_jpg.c
+	"config.h"
+	"glm.h"
+	"glmint.h"
+	<stdio.h>
+	<setjmp.h>
+	<string.h>
+	<stdlib.h>
+	<jpeglib.h>
+
+1460533319 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmimg_devil.c
+	"config.h"
+	"glm.h"
+	"glmint.h"
+	<IL/il.h>
+	<stdlib.h>
+
+1460533348 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmimg_jpg.c
+	"config.h"
+	"glm.h"
+	"glmint.h"
+	<stdio.h>
+	<setjmp.h>
+	<string.h>
+	<stdlib.h>
+	<jpeglib.h>
+
+1460533374 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmimg_png.c
+	"config.h"
+	"glm.h"
+	"glmint.h"
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<png.h>
+
+1460533407 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmimg_sdl.c
+	"config.h"
+	"glm.h"
+	"glmint.h"
+	<SDL/SDL_image.h>
+
+1460533441 source:c:\users\mauricio\dropbox\8 semestre itc\gráficas computacionales\proyecto\glmimg_sim.c
+	"config.h"
+	"glm.h"
+	"glmint.h"
+	<simage.h>
+
